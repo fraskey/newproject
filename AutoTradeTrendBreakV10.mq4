@@ -6,7 +6,6 @@
 #property copyright   "2005-2018, Xuejiayong."
 #property link        "http://www.mql14.com"
 
-
 //发送电子邮件，参数subject为邮件主题，some_text为邮件内容 void SendMail( string subject, string some_text)
 
 //通用宏定义
@@ -1364,7 +1363,7 @@ void inittiimeperiod()
 	timeperiod[4] = PERIOD_D1;
 	timeperiod[5] = PERIOD_W1;
 	
-	TimePeriodNum = 5;
+	TimePeriodNum = 6;
 	
 }
 
@@ -1692,7 +1691,7 @@ void initforexindex()
 }
 
 //根据账户总额设置交易的风险偏好，原则上账户总额越大，承受的MaxLoses比例越小
-//原则上账户每次提升500美金，风险降低0.2%
+//原则上账户每次提升500美金，风险降低0.0X%
 
 void autoadjustmaxlose()
 {
@@ -1739,26 +1738,34 @@ void autoadjustmaxlose()
 				
 				for(subbuysellpoint = 0; subbuysellpoint <= 7;subbuysellpoint++)
 				{
-					for(buysellpoint = 1; buysellpoint <= 20;buysellpoint++)
+					for(buysellpoint = 1; buysellpoint <= HBUYSELLALGNUM;buysellpoint++)
 					{
 					
 
 						//定义时间周期，一分钟的买卖点
-						if ((buysellpoint <= 8)&&(buysellpoint > 0))
+						if ((buysellpoint <= HBUYSELLALGNUM)&&(buysellpoint > 0))
 						{
 
-							//每单允许损失的最大账户金额比例2%
+							//每单允许损失的最大账户金额比例1%
 							BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.02 - 0.001*(int((int(AccountBalance()))/500)))/2;											
 
 						}
-						//定义时间周期，五分钟及以上的买卖点
-						else if((buysellpoint <= 20)&&(buysellpoint > 8))
+						//定义时间周期，五分钟的买卖点
+						else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 						{	
 
-							//每单允许损失的最大账户金额比例5%
+							//每单允许损失的最大账户金额比例2%
 							BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
 
 						}
+						//定义时间周期，三十分钟的买卖点
+						else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
+						{	
+
+							//每单允许损失的最大账户金额比例2%
+							BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
+
+						}						
 						else
 						{
 							;
@@ -1922,9 +1929,6 @@ void autoadjustglobalamount()
 				//Print("default autoadjustglobalamount Amount is = "+MyLotsH+":"+MyLotsL);	 							
 			}		
 			
-
-
-
 
 			//每日刷新一次
 			for(SymPos = 0; SymPos < symbolNum;SymPos++)
@@ -2302,10 +2306,17 @@ void InitBuySellPos()
 	int magicnumber,NowMagicNumber;
 
 
-
 	for(i = 0; i < 3*HBUYSELLALGNUM+1; i++)
 	{
-		SubMagicName[i] = "TrendBreakNumber"+IntegerToString(i);
+		if(i < 10)
+		{
+			SubMagicName[i] = "TrendBreakNumber"+IntegerToString(0)+IntegerToString(i);
+		}
+		else
+		{
+			SubMagicName[i] = "TrendBreakNumber"+IntegerToString(i);			
+		}
+
 	}
 
 	/*
@@ -2495,7 +2506,7 @@ void InitBuySellPos()
 
 				}
 				//定义时间周期，三十分钟及以上的买卖点
-				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
+				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].timeperiodnum = PERIOD_M30;
 	
@@ -3057,7 +3068,7 @@ double  ordersrealprofitall( int timeperiodnum)
 				//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单，可动态改变止损值
 				//一般情况下不触发
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3127,7 +3138,7 @@ double  ordersexpectedmaxprofitall(int timeperiodnum )
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3194,7 +3205,7 @@ int ordercountall( int timeperiodnum)
 				vbid    = MarketInfo(my_symbol,MODE_BID);						  
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 					//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单
@@ -3257,7 +3268,7 @@ void ordercloseall(int timeperiodnum)
 				vbid    = MarketInfo(my_symbol,MODE_BID);						  
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3343,7 +3354,7 @@ void ordercloseall2(int timeperiodnum)
 				vbid    = MarketInfo(my_symbol,MODE_BID);						  
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3876,7 +3887,7 @@ void monitoraccountprofit()
 					/*一波做完后，手工禁止交易；第二天继续做*/					
 					for(j = 0;j < 24; j++)
 					{
-						if(ordercountall(SymPos)>0)
+						if(ordercountallbyforex(SymPos)>0)
 						{
 							Sleep(1000); 
 							ordercloseallbyforex(SymPos);
@@ -3901,9 +3912,6 @@ void monitoraccountprofit()
 
 	}	
 	
-
-
-
 
 }
 
