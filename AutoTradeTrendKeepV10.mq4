@@ -1354,7 +1354,7 @@ void initsymbol()
 
 
 /*定义操作的时间周期集合*/
-//只用到了日线，不再引入周线，也是便于后期海量的测试。
+//用到周线，也是便于后期海量的测试。
 void inittiimeperiod()
 {
 	timeperiod[0] = PERIOD_M1;
@@ -1364,7 +1364,7 @@ void inittiimeperiod()
 	timeperiod[4] = PERIOD_D1;
 	timeperiod[5] = PERIOD_W1;
 	
-	TimePeriodNum = 5;
+	TimePeriodNum = 6;
 	
 }
 
@@ -1692,7 +1692,7 @@ void initforexindex()
 }
 
 //根据账户总额设置交易的风险偏好，原则上账户总额越大，承受的MaxLoses比例越小
-//原则上账户每次提升500美金，风险降低0.2%
+//原则上账户每次提升500美金，风险降低0.0X%
 
 void autoadjustmaxlose()
 {
@@ -1739,26 +1739,34 @@ void autoadjustmaxlose()
 				
 				for(subbuysellpoint = 0; subbuysellpoint <= 7;subbuysellpoint++)
 				{
-					for(buysellpoint = 1; buysellpoint <= 20;buysellpoint++)
+					for(buysellpoint = 1; buysellpoint <= HBUYSELLALGNUM;buysellpoint++)
 					{
 					
 
 						//定义时间周期，一分钟的买卖点
-						if ((buysellpoint <= 8)&&(buysellpoint > 0))
+						if ((buysellpoint <= HBUYSELLALGNUM)&&(buysellpoint > 0))
 						{
 
-							//每单允许损失的最大账户金额比例2%
+							//每单允许损失的最大账户金额比例1%
 							BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.02 - 0.001*(int((int(AccountBalance()))/500)))/2;											
 
 						}
-						//定义时间周期，五分钟及以上的买卖点
-						else if((buysellpoint <= 20)&&(buysellpoint > 8))
+						//定义时间周期，五分钟的买卖点
+						else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 						{	
 
-							//每单允许损失的最大账户金额比例5%
+							//每单允许损失的最大账户金额比例2%
 							BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
 
 						}
+						//定义时间周期，三十分钟的买卖点
+						else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
+						{	
+
+							//每单允许损失的最大账户金额比例2%
+							BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
+
+						}						
 						else
 						{
 							;
@@ -2305,7 +2313,15 @@ void InitBuySellPos()
 
 	for(i = 0; i < 3*HBUYSELLALGNUM+1; i++)
 	{
-		SubMagicName[i] = "TrendKeepNumber"+IntegerToString(i);
+		if(i < 10)
+		{
+			SubMagicName[i] = "TrendKeepNumber"+IntegerToString(0)+IntegerToString(i);
+		}
+		else
+		{
+			SubMagicName[i] = "TrendKeepNumber"+IntegerToString(i);			
+		}
+
 	}
 
 	for(SymPos = 0; SymPos < symbolNum;SymPos++)
@@ -2445,7 +2461,7 @@ void InitBuySellPos()
 
 				}
 				//定义时间周期，三十分钟及以上的买卖点
-				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
+				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].timeperiodnum = PERIOD_M30;
 	
@@ -2976,6 +2992,72 @@ bool isvalidmagicnumber(int magicnumber)
 //去除近期成交单和设置成无止盈的手工单
 //不同的时间周期分别统计，-1统计所有时间周期
 
+
+int  profitedordercountall( int timeperiodnum,double  myprofit)
+{
+	double profit = 0;
+	int i,SymPos,NowMagicNumber;
+	string my_symbol;
+	double vbid,vask;
+	int count = 0;
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+				//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单，可动态改变止损值
+				//一般情况下不触发
+
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
+					)||(-1==timeperiodnum))
+				{
+
+					if(OrderTakeProfit()>0.01)
+					{
+						if((TimeCurrent()-OrderOpenTime())>BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod)
+						{
+							if((OrderType()==OP_BUY)||(OrderType()==OP_SELL))
+							{
+
+								if((OrderProfit()+OrderCommission())>myprofit)
+								{
+									count++;
+								}	
+
+							}
+
+						}
+
+					}				
+
+				}
+			
+			}
+			
+		}
+	}
+
+	return count;
+}
+
+
+
 double  ordersrealprofitall( int timeperiodnum)
 {
 	double profit = 0;
@@ -3007,7 +3089,7 @@ double  ordersrealprofitall( int timeperiodnum)
 				//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单，可动态改变止损值
 				//一般情况下不触发
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3077,7 +3159,7 @@ double  ordersexpectedmaxprofitall(int timeperiodnum )
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3144,7 +3226,7 @@ int ordercountall( int timeperiodnum)
 				vbid    = MarketInfo(my_symbol,MODE_BID);						  
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 					//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单
@@ -3207,7 +3289,7 @@ void ordercloseall(int timeperiodnum)
 				vbid    = MarketInfo(my_symbol,MODE_BID);						  
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3293,7 +3375,7 @@ void ordercloseall2(int timeperiodnum)
 				vbid    = MarketInfo(my_symbol,MODE_BID);						  
 				vask    = MarketInfo(my_symbol,MODE_ASK);	
 
-				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<(1+timeperiodnum)*HBUYSELLALGNUM))
+				if(((timeperiodnum >=0) &&((buysellpoint>timeperiodnum*HBUYSELLALGNUM)&&(buysellpoint<=(1+timeperiodnum)*HBUYSELLALGNUM))
 					)||(-1==timeperiodnum))
 				{
 
@@ -3487,7 +3569,6 @@ double  ordersexpectedmaxprofitallbyforex(int MySymPos )
 
 	return profit;
 }
-
 
 
 // 交易单的总数量，去除近期成交单和设置成无止盈的手工单
@@ -3728,6 +3809,466 @@ void ordercloseall2byforex(int MySymPos)
 
 
 
+//////////////////////////////////////////////////
+
+
+int  profitedordercountallbysubbspoint( int mysubbuysellpoint,double myprofit)
+{
+	double profit = 0;
+	int i,SymPos,NowMagicNumber;
+	string my_symbol;
+	double vbid,vask;
+	int count = 0;
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+				//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单，可动态改变止损值
+				//一般情况下不触发
+
+				if(mysubbuysellpoint == subbuysellpoint)
+				{
+
+					if(OrderTakeProfit()>0.01)
+					{
+						//当天买入尽快进入当天的monitor，因此设置了除以10的操作，以下函数雷同
+						if((TimeCurrent()-OrderOpenTime())>(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod/10))
+						{
+							if(OrderType()==OP_BUY)
+							{
+								profit = (vask - BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice)/
+											BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice;
+
+								if(profit > myprofit)
+								{
+									count++;
+								}											
+							}
+							
+							if(OrderType()==OP_SELL)
+							{
+				 
+								profit = (BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice - vask)/
+											BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice;	
+								if(profit > myprofit)
+								{
+									count++;
+								}														
+							}
+
+
+
+
+						}
+
+					}				
+
+				}
+
+
+
+
+			
+			}
+			
+		}
+	}
+
+	return count;
+}
+
+
+
+double  ordersrealprofitallbysubbspoint( int mysubbuysellpoint)
+{
+	double profit = 0;
+	int i,SymPos,NowMagicNumber;
+	string my_symbol;
+	double vbid,vask;
+
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+				//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单，可动态改变止损值
+				//一般情况下不触发
+
+				if(mysubbuysellpoint == subbuysellpoint)
+				{
+
+					if(OrderTakeProfit()>0.01)
+					{
+						//当天买入尽快进入当天的monitor，因此设置了除以10的操作，以下函数雷同
+						if((TimeCurrent()-OrderOpenTime())>(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod/10))
+						{
+							if(OrderType()==OP_BUY)
+							{
+								profit += (vask - BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice)/
+											BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice;
+							}
+							
+							if(OrderType()==OP_SELL)
+							{
+				 
+								profit += (BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice - vask)/
+											BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice;				
+							}
+
+						}
+
+					}				
+
+				}
+
+
+
+
+			
+			}
+			
+		}
+	}
+
+	return profit;
+}
+
+// 期望最大止盈值，是按照盈利百分比来计算的，设想每个单都达到了止盈值的盈利百分比。sum(|ordertakeprofit-orderopenprice|/orderopenprice)
+//去除近期成交单和设置成无止盈的手工单
+double  ordersexpectedmaxprofitallbysubbspoint(int mysubbuysellpoint )
+{
+	double profit = 0;
+	int i,SymPos,NowMagicNumber;
+	string my_symbol;
+	double vbid,vask;
+
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+
+				if(mysubbuysellpoint == subbuysellpoint)
+				{
+
+					//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单，可以手动改变止损值
+					//一般情况下不触发
+					if(OrderTakeProfit()>0.01)
+					{
+						if((TimeCurrent()-OrderOpenTime())>(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod/10))
+						{
+							if(OrderType()==OP_BUY)
+							{
+								profit += (BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].takeprofit - BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice)/
+											BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice;
+							}
+							
+							if(OrderType()==OP_SELL)
+							{
+				 
+								profit += (BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice - BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].takeprofit)/
+											BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].openprice;				
+							}
+
+						}
+
+					}				
+				}
+			
+			}
+			
+		}
+	}
+
+	return profit;
+}
+
+
+// 交易单的总数量，去除近期成交单和设置成无止盈的手工单
+int ordercountallbysubbspoint( int mysubbuysellpoint)
+{
+	int count = 0;
+	int i,SymPos,NowMagicNumber;
+	string my_symbol;
+	double vbid,vask;
+
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+				if(mysubbuysellpoint == subbuysellpoint)
+				{
+					//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单
+					//一般情况下不触发
+					if(OrderTakeProfit()>0.01)
+					{
+						if((TimeCurrent()-OrderOpenTime())>(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod/10))
+						{
+
+							if((OrderType()==OP_BUY)||(OrderType()==OP_SELL))
+							{
+
+								//if((OrderProfit()+OrderCommission())>myprofit)
+								{
+									count++;
+								}	
+
+							}
+
+						}
+
+					}				
+				}
+			
+			}
+			
+		}
+	}
+	
+	return count;
+}
+
+
+
+// 正常交易单全部关闭掉；去除近期成交单和设置成无止盈的手工单
+void ordercloseallbysubbspoint(int mysubbuysellpoint)
+{
+	int i,SymPos,NowMagicNumber,ticket;
+	string my_symbol;
+	double vbid,vask;
+
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+				if(mysubbuysellpoint == subbuysellpoint)
+				{
+
+					//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单
+					//一般情况下不触发
+					if(OrderTakeProfit()>0.01)
+					{
+						if((TimeCurrent()-OrderOpenTime())>(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod/10))
+						{
+							if(OrderType()==OP_BUY)
+							{
+								ticket =OrderClose(OrderTicket(),OrderLots(),vbid,5,Red);
+								  
+								 if(ticket <0)
+								 {
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose buy ordercloseall with vbid failed with error #",GetLastError());
+								 }
+								 else
+								 {     
+									BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].pendingstate = HPENDINGSTATEEMPTY;				        
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose buy ordercloseall with vbid  successfully");
+								 }    	
+								Sleep(1000); 
+						
+							}
+							
+							if(OrderType()==OP_SELL)
+							{
+								ticket =OrderClose(OrderTicket(),OrderLots(),vask,5,Red);
+								  
+								 if(ticket <0)
+								 {
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose sell ordercloseall with vask  failed with error #",GetLastError());
+								 }
+								 else
+								 {      
+									BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].pendingstate = HPENDINGSTATEEMPTY;							       
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose sell ordercloseall with vask   successfully");
+								 }  
+								Sleep(1000);				 
+						
+							}
+
+						}
+
+					}		
+				}		
+			
+			}
+			
+		}
+	}
+	
+	return;
+}
+
+
+// 正常交易单全部关闭掉；去除近期成交单和设置成无止盈的手工单
+void ordercloseall2bysubbspoint(int mysubbuysellpoint)
+{
+	int i,SymPos,NowMagicNumber,ticket;
+	string my_symbol;
+	double vbid,vask;
+
+	int buysellpoint;
+	int subbuysellpoint;
+
+	for (i = 0; i < OrdersTotal(); i++)
+	{
+		if (OrderSelect(i,SELECT_BY_POS,MODE_TRADES))
+		{
+			if(isvalidmagicnumber((int)OrderMagicNumber()) == true)
+			{			
+
+				SymPos = ((int)OrderMagicNumber()) /MAINMAGIC-1;
+				NowMagicNumber = OrderMagicNumber() - (SymPos+1) *MAINMAGIC;
+
+				buysellpoint = ((int)NowMagicNumber) /10;				
+				subbuysellpoint = (NowMagicNumber%10);  	
+					
+				my_symbol = MySymbol[SymPos];
+				
+				vbid    = MarketInfo(my_symbol,MODE_BID);						  
+				vask    = MarketInfo(my_symbol,MODE_ASK);	
+
+				if(mysubbuysellpoint == subbuysellpoint)
+				{
+
+					//当去掉止盈的时候，程序对该单放弃监控，转为手动监控，通常是指那些基本面同步发生了重大同方向的变化，且适合长期持有的单子；改为手工持单
+					//一般情况下不触发
+					if(OrderTakeProfit()>0.01)
+					{
+						if((TimeCurrent()-OrderOpenTime())>(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod/10))
+						{
+							if(OrderType()==OP_BUY)
+							{
+								ticket =OrderClose(OrderTicket(),OrderLots(),vask,5,Red);
+								  
+								if(ticket <0)
+								{
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose buy ordercloseall with vbid failed with error #",GetLastError());
+								}
+								else
+								{    
+									BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].pendingstate = HPENDINGSTATEEMPTY;							        
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose buy ordercloseall with vbid  successfully");
+								}    	
+								Sleep(1000); 
+						
+							}
+							
+							if(OrderType()==OP_SELL)
+							{
+								ticket =OrderClose(OrderTicket(),OrderLots(),vbid,5,Red);
+								  
+								if(ticket <0)
+								{
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose sell ordercloseall with vask  failed with error #",GetLastError());
+								}
+								else
+								{       
+									BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].pendingstate = HPENDINGSTATEEMPTY;								     
+									Print(BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].MagicName+"OrderClose sell ordercloseall with vask   successfully");
+								}  
+								Sleep(1000);				 
+						
+							}
+
+						}
+
+					}	
+				}			
+
+			
+			}
+			
+		}
+	}
+	
+	return;
+}
+
+//////////////////////////////////////////////////
+
+
 // 正常交易出现大幅盈利的情况下平掉所有交易，去除近期成交单和设置成无止盈的手工单
 void monitoraccountprofit()
 {
@@ -3742,10 +4283,14 @@ void monitoraccountprofit()
 	string subject="";
 	string some_text="";
 
+	int mysubbuysellpoint;
+
 	bool turnoffflag = false;
 	int j=0;
 	int k = 0;	
 	int allordernumbers;
+
+	int subbuysellpoint;
 
 	int timeperiodnum;
 	/*原则上采用服务器交易时间，为了便于人性化处理，做了一个转换*/	
@@ -3765,11 +4310,90 @@ void monitoraccountprofit()
 		allordernumbers = ordercountall(timeperiodnum);
 		if(allordernumbers>2)
 		{
+
+			//定义超过80%的正值的时候，直接收割。
+			if(-1 == timeperiodnum)
+			{
+				if((allordernumbers>=(symbolNum*0.8))&&(allordernumbers*0.75 < profitedordercountall(timeperiodnum,0))&&(ordersrealprofitall(timeperiodnum)>0))
+				{
+					//turnoffflag = true;						
+					Print("timeperiodnum 1 successfully Close All trades"+timeperiodnum+": allordernumbers = " + allordernumbers + "profitedordercountall = " + profitedordercountall(timeperiodnum,0)
+							+"ordersrealprofitall = "+ordersrealprofitall(timeperiodnum));
+					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+					//if(turnoffflag == true)
+					{			
+						j=0;
+						k = 0;		
+						
+						/*一波做完后，手工禁止交易；第二天继续做*/					
+						for(j = 0;j < 24; j++)
+						{
+							if(ordercountall(timeperiodnum)>0)
+							{
+								Sleep(1000); 
+								ordercloseall(timeperiodnum);
+								Sleep(1000); 
+								ordercloseall2(timeperiodnum);					
+								Sleep(1000); 
+								k++;				
+							}
+							
+						}
+						if(k>=(j-1))
+						{		
+							Print("!!timeperiod 1 close all trades monitoraccountprofit "+timeperiodnum+"Something Serious Error by colse all order,pls close handly");			
+							//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
+						}
+										
+					}					
+				}
+
+			}
+			else
+			{
+				if((allordernumbers>=(symbolNum*0.6))&&(allordernumbers*0.8 < profitedordercountall(timeperiodnum,0))&&(ordersrealprofitall(timeperiodnum)>0))
+				{
+					//turnoffflag = true;						
+					Print("timeperiodnum 2 successfully Close certern timeperiod trades"+timeperiodnum+": allordernumbers = " + allordernumbers + "profitedordercountall = " + profitedordercountall(timeperiodnum,0)
+							+"ordersrealprofitall = "+ordersrealprofitall(timeperiodnum));
+					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+					//if(turnoffflag == true)
+					{			
+						j=0;
+						k = 0;		
+						
+						/*一波做完后，手工禁止交易；第二天继续做*/					
+						for(j = 0;j < 24; j++)
+						{
+							if(ordercountall(timeperiodnum)>0)
+							{
+								Sleep(1000); 
+								ordercloseall(timeperiodnum);
+								Sleep(1000); 
+								ordercloseall2(timeperiodnum);					
+								Sleep(1000); 
+								k++;				
+							}
+							
+						}
+						if(k>=(j-1))
+						{		
+							Print("!!timeperiod 2 close certern period trades monitoraccountprofit "+timeperiodnum+"Something Serious Error by colse all order,pls close handly");			
+							//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
+						}
+										
+					}	
+				}
+
+			}
+
+
+
 			if(ordersrealprofitall(timeperiodnum)>(ordersexpectedmaxprofitall(timeperiodnum)*50/(allordernumbers*allordernumbers+10*allordernumbers+50)))
 			{
 				
 				//turnoffflag = true;						
-				Print("timeperiodnum successfully Close All"+timeperiodnum+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitall(timeperiodnum)
+				Print("timeperiodnum 3 successfully Close All"+timeperiodnum+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitall(timeperiodnum)
 						+"ordersrealprofitall = "+ordersrealprofitall(timeperiodnum));
 				/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
 				//if(turnoffflag == true)
@@ -3793,7 +4417,7 @@ void monitoraccountprofit()
 					}
 					if(k>=(j-1))
 					{		
-						Print("!!timeperiod monitoraccountprofit "+timeperiodnum+"Something Serious Error by colse all order,pls close handly");			
+						Print("!!timeperiod 3 monitoraccountprofit "+timeperiodnum+"Something Serious Error by colse all order,pls close handly");			
 						//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
 					}
 									
@@ -3818,7 +4442,7 @@ void monitoraccountprofit()
 			{
 				
 				//turnoffflag = true;						
-				Print("forex successfully Close All"+SymPos+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitallbyforex(SymPos)
+				Print("forex successfully 4 Close All"+SymPos+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitallbyforex(SymPos)
 						+"ordersrealprofitall = "+ordersrealprofitallbyforex(SymPos));
 				/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
 				//if(turnoffflag == true)
@@ -3829,7 +4453,7 @@ void monitoraccountprofit()
 					/*一波做完后，手工禁止交易；第二天继续做*/					
 					for(j = 0;j < 24; j++)
 					{
-						if(ordercountall(SymPos)>0)
+						if(ordercountallbyforex(SymPos)>0)
 						{
 							Sleep(1000); 
 							ordercloseallbyforex(SymPos);
@@ -3842,7 +4466,7 @@ void monitoraccountprofit()
 					}
 					if(k>=(j-1))
 					{		
-						Print("!!timeperiod monitoraccountprofit "+SymPos+"Something Serious Error by colse all order,pls close handly");			
+						Print("!!timeperiod 4 monitoraccountprofit "+SymPos+"Something Serious Error by colse all order,pls close handly");			
 						//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
 					}
 									
@@ -3854,7 +4478,137 @@ void monitoraccountprofit()
 
 	}	
 
-	
+	//巡视每一天盈利情况
+	for(subbuysellpoint = 1; subbuysellpoint < 6;SymPos++)
+	{
+
+		allordernumbers = ordercountallbysubbspoint(subbuysellpoint);
+		if(allordernumbers>2)
+		{
+
+			//定义超过80%的正值的时候，直接收割。
+
+			timelocal = TimeCurrent() ;
+			mysubbuysellpoint = (TimeDayOfWeek(timelocal))%7;  	
+
+			//当天交易单，量可以少一点，盈利单80%以上			
+			if(mysubbuysellpoint == subbuysellpoint)
+			{
+				if((allordernumbers>=(symbolNum*0.6))&&(allordernumbers*0.8 < profitedordercountallbysubbspoint(subbuysellpoint,0))&&(ordersrealprofitallbysubbspoint(subbuysellpoint)>0))
+				{
+					//turnoffflag = true;						
+					Print("subbuysellpoint 5 successfully Close All trades"+subbuysellpoint+": allordernumbers = " + allordernumbers + "profitedordercountallbysubbspoint = " + profitedordercountallbysubbspoint(subbuysellpoint,0)
+							+"ordersrealprofitallbysubbspoint = "+ordersrealprofitallbysubbspoint(subbuysellpoint));
+					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+					//if(turnoffflag == true)
+					{			
+						j=0;
+						k = 0;		
+						
+						/*一波做完后，手工禁止交易；第二天继续做*/					
+						for(j = 0;j < 24; j++)
+						{
+							if(ordercountallbysubbspoint(subbuysellpoint)>0)
+							{
+								Sleep(1000); 
+								ordercloseallbysubbspoint(subbuysellpoint);
+								Sleep(1000); 
+								ordercloseall2bysubbspoint(subbuysellpoint);					
+								Sleep(1000); 
+								k++;				
+							}
+							
+						}
+						if(k>=(j-1))
+						{		
+							Print("!!subbuysellpoint 5 close all trades monitoraccountprofit "+timeperiodnum+"Something Serious Error by colse all order,pls close handly");			
+							//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
+						}
+										
+					}					
+				}
+
+			}
+			else
+			{
+				if((allordernumbers>=(symbolNum*0.8))&&(allordernumbers*0.75 < profitedordercountallbysubbspoint(subbuysellpoint,0))&&(ordersrealprofitallbysubbspoint(subbuysellpoint)>0))
+				{
+					//turnoffflag = true;						
+					Print("subbuysellpoint 6 successfully Close certern subbuysellpoint trades"+subbuysellpoint+": allordernumbers = " + allordernumbers + "profitedordercountallbysubbspoint = " + profitedordercountallbysubbspoint(subbuysellpoint,0)
+							+"ordersrealprofitallbysubbspoint = "+ordersrealprofitallbysubbspoint(subbuysellpoint));
+					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+					//if(turnoffflag == true)
+					{			
+						j=0;
+						k = 0;		
+						
+						/*一波做完后，手工禁止交易；第二天继续做*/					
+						for(j = 0;j < 24; j++)
+						{
+							if(ordercountallbysubbspoint(subbuysellpoint)>0)
+							{
+								Sleep(1000); 
+								ordercloseallbysubbspoint(subbuysellpoint);
+								Sleep(1000); 
+								ordercloseall2bysubbspoint(subbuysellpoint);					
+								Sleep(1000); 
+								k++;				
+							}
+							
+						}
+						if(k>=(j-1))
+						{		
+							Print("!!subbuysellpoint 6 close certern period trades monitoraccountprofit "+subbuysellpoint+"Something Serious Error by colse all order,pls close handly");			
+							//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
+						}
+										
+					}	
+				}
+
+			}
+
+
+			if(ordersrealprofitallbysubbspoint(subbuysellpoint)>
+				(ordersexpectedmaxprofitallbysubbspoint(subbuysellpoint)*200/(allordernumbers*allordernumbers*allordernumbers+allordernumbers*allordernumbers+20*allordernumbers+200)))
+			{
+				
+				//turnoffflag = true;						
+				Print("subbuysellpoint 7 successfully Close All"+subbuysellpoint+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitallbysubbspoint(subbuysellpoint)
+						+"ordersrealprofitall = "+ordersrealprofitallbysubbspoint(subbuysellpoint));
+				/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+				//if(turnoffflag == true)
+				{			
+					j=0;
+					k = 0;		
+					
+					/*一波做完后，手工禁止交易；第二天继续做*/					
+					for(j = 0;j < 24; j++)
+					{
+						if(ordercountallbysubbspoint(subbuysellpoint)>0)
+						{
+							Sleep(1000); 
+							ordercloseallbysubbspoint(subbuysellpoint);
+							Sleep(1000); 
+							ordercloseall2bysubbspoint(subbuysellpoint);					
+							Sleep(1000); 
+							k++;				
+						}
+						
+					}
+					if(k>=(j-1))
+					{		
+						Print("!!subbuysellpoint 7 monitoraccountprofit "+subbuysellpoint+"Something Serious Error by colse all order,pls close handly");			
+						//SendMail( "!!monitoraccountprofit Something Serious Error by colse all order,pls close handly","");		
+					}
+									
+				}
+
+			}		
+
+		}
+
+	}	
+
 }
 
 
@@ -3989,10 +4743,8 @@ int deinit()
 }
 
 
-
 int ChartEvent = 0;
 bool PrintFlag = false;
-
 
 
 // 每个时间周期调用一次，计算当前周期强弱等相关值，寻找bool穿越点，并记录当时的值
@@ -4741,7 +5493,16 @@ void orderbuyselltype(int SymPos,int timeperiodnum)
 		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
 		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[6])	
 		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[7])	
-		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])			
+		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])	
+
+		&&((3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[0])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[1])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[2])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[3])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[4])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
+			)	
+
 		&& (vask > boll_low_B)	
 
 		&&(opendaycheck(SymPos) == true)
@@ -4781,7 +5542,16 @@ void orderbuyselltype(int SymPos,int timeperiodnum)
 		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
 		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[6])	
 		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[7])	
-		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])			
+		&& (-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])	
+
+
+		&&((3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[0])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[1])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[2])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[3])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[4])	
+		||(3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
+			)					
 		&& (vask > boll_low_B)	
 
 		&&(opendaycheck(SymPos) == true)
@@ -4895,7 +5665,15 @@ void orderbuyselltype(int SymPos,int timeperiodnum)
 		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
 		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[6])	
 		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[7])	
-		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])			
+		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])
+
+		&&((-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[0])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[1])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[2])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[3])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[4])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
+			)			
 		&& (vbid < boll_up_B)
 
 		&&(opendaycheck(SymPos) == true)
@@ -4937,7 +5715,16 @@ void orderbuyselltype(int SymPos,int timeperiodnum)
 		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
 		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[6])	
 		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[7])	
-		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])			
+		&& (3> BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[8])	
+
+		&&((-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[0])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[1])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[2])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[3])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[4])	
+		||(-3< BoolCrossRecord[SymPos][timeperiodnum+2].CrossFlagL[5])	
+			)	
+
 		&& (vbid < boll_up_B)
 
 		&&(opendaycheck(SymPos) == true)
@@ -5618,7 +6405,3 @@ void checkbuysellorder()
 	}
 
 }
-	
-
-
-
