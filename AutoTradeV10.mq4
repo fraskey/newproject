@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                       AutoTradeTrendKeepV10.mq4  |
+//|                                       AutoTradeV10.mq4  |
 //|                   Copyright 2005-2018, Copyright. Personal Keep  |
 //|                                              http://www.mql4.com |
 //+------------------------------------------------------------------+
@@ -15,7 +15,6 @@
 #define HCROSSNUMBER  16
 #define MAINMAGIC  100000
 #define HSLBUYSELLREORD 5000
-
 
 #define HBUYSELLALGNUM 20
 //外汇商专用宏定义
@@ -157,9 +156,6 @@ int ThirtyM_Freq = 0;
 //结束全局变量定义
 //////////////////////////////////////////
 
-
-
-
 //结构体定义
 //////////////////////////////////////////
 
@@ -299,7 +295,7 @@ stBoolCrossRecord BoolCrossRecord[50][HCROSSNUMBER+1];
 
 
 //设置全局变量，定义是否开启趋势买卖点、趋势转折买卖点、趋势转折挂单买卖点；通过修改全局变量可以在线改变
-void initglogaltrig()
+void initglobaltrig()
 {
 
 	double Trend_Keep;
@@ -416,7 +412,7 @@ void initglogaltrig()
 
 }
 
-void deinitglogaltrig()
+void deinitglobaltrig()
 {
 
 
@@ -438,8 +434,8 @@ void deinitglogaltrig()
 }
 
 
-
 // 连接到不同外汇商的实体服务器上，并针对不同的外汇商定义对应的外汇操作集合
+//部分外汇服务商的参数配置不完整
 void initsymbol()
 {
 	string subject="";
@@ -2561,21 +2557,21 @@ void InitBuySellPos()
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 6;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 3;						
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 6;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 4;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 2;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 5;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 1.5;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 4;											
 				}		
 
 				//定义时间周期，一分钟的买卖点,顺势交易的回调，回调已经很深，大概率回到正轨，因此止损稍微大一点，趋势打破买卖点
@@ -4778,7 +4774,6 @@ void monitoraccountprofittrend()
 	//巡视每一天盈利情况
 	for(subbuysellpoint = 1; subbuysellpoint < 6;SymPos++)
 	{
-
 		allordernumbers = ordercountallbysubbspointtrend(subbuysellpoint);
 		if(allordernumbers>2)
 		{
@@ -4866,7 +4861,7 @@ void monitoraccountprofittrend()
 
 
 			if(ordersrealprofitallbysubbspointtrend(subbuysellpoint)>
-				(ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)*200/(allordernumbers*allordernumbers*allordernumbers+allordernumbers*allordernumbers+20*allordernumbers+200)))
+				(ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)*2000/(allordernumbers*allordernumbers*allordernumbers+allordernumbers*allordernumbers+20*allordernumbers+2000)))
 			{
 				
 				//turnoffflag = true;						
@@ -5870,7 +5865,7 @@ int init()
 
 
 	//设置全局变量，定义是否开启趋势买卖点、趋势转折买卖点、趋势转折挂单买卖点；通过修改全局变量可以在线改变
-	initglogaltrig();
+	initglobaltrig();
 	
 	// 初始化外汇集合
 	initsymbol();  
@@ -5968,7 +5963,7 @@ int init()
 // 主程序退出
 int deinit()
 {
-	deinitglogaltrig();
+	deinitglobaltrig();
 	return 0;
 }
 
@@ -6618,7 +6613,6 @@ void orderbuyselltypetrend(int SymPos,int timeperiodnum)
 	//检测全局变量g_Trend_Keep，为负数时关闭趋势买卖点函数
 	if(GlobalVariableCheck("g_Trend_Keep") == TRUE)
 	{  
-		GlobalVariableSet("g_Trend_Keep",1);
 		Trend_Keep = GlobalVariableGet("g_Trend_Keep");  
 		if(Trend_Keep < 0)
 		{
@@ -7044,7 +7038,6 @@ void orderbuyselltypebreak(int SymPos,int timeperiodnum)
 	//检测全局变量g_Trend_Keep，为负数时关闭趋势买卖点函数
 	if(GlobalVariableCheck("g_Trend_Break") == TRUE)
 	{  
-		GlobalVariableSet("g_Trend_Break",1);
 		Trend_Break = GlobalVariableGet("g_Trend_Break");  
 		if(Trend_Break < 0)
 		{
@@ -7813,7 +7806,6 @@ void orderbuyselltypebreakhung(int SymPos,int timeperiodnum)
 	//检测全局变量g_Trend_Keep，为负数时关闭趋势买卖点函数
 	if(GlobalVariableCheck("g_Trend_Break_Hang") == TRUE)
 	{  
-		GlobalVariableSet("g_Trend_Break_Hang",1);
 		Trend_Break_Hang = GlobalVariableGet("g_Trend_Break_Hang");  
 		if(Trend_Break_Hang < 0)
 		{
