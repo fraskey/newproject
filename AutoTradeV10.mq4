@@ -2544,7 +2544,7 @@ void InitBuySellPos()
 				BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoptailtimes = 1.1;
 
 				//定义伪装止损止盈值和实际止损止盈值之间的比值，防止黑平台根据你的头寸恶意止损和止盈
-				BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].fakedlevel = 2.5;
+				BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].fakedlevel = 1.2;
 
 
 				//记录当前一分钟的ibar位置
@@ -2555,44 +2555,44 @@ void InitBuySellPos()
 				if ((buysellpoint <= HBUYSELLALGNUM)&&(buysellpoint > 0))
 				{
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 6;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 4;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 6;						
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 12;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 4;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 5;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 10;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.5;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 4;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 8;											
 				}		
 
 				//定义时间周期，一分钟的买卖点,顺势交易的回调，回调已经很深，大概率回到正轨，因此止损稍微大一点，趋势打破买卖点
 				else if ((buysellpoint <= HBUYSELLALGNUM*4)&&(buysellpoint > HBUYSELLALGNUM*3))
 				{
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 3;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2.5;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 25;						
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 30;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*5)&&(buysellpoint > HBUYSELLALGNUM*4))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.8;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 20;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*6)&&(buysellpoint > HBUYSELLALGNUM*5))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.5;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.2;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 16;											
 				}							
@@ -4586,6 +4586,14 @@ void monitoraccountprofittrend()
 	int subbuysellpoint;
 
 	int timeperiodnum;
+
+
+	//确保寻找买卖点是每个周期计算一次，而不是每个tick计算一次
+	if ( BoolCrossRecord[0][0].ChartEvent == iBars(MySymbol[0],timeperiod[0]))
+	{
+		return;
+	}
+
 	/*原则上采用服务器交易时间，为了便于人性化处理，做了一个转换*/	
 	timelocal = TimeCurrent() + globaltimezonediff*60*60;
 
@@ -4820,6 +4828,43 @@ void monitoraccountprofittrend()
 					}					
 				}
 
+				if(ordersrealprofitallbysubbspointtrend(subbuysellpoint)>
+					(ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)*800/(allordernumbers*allordernumbers*allordernumbers+allordernumbers*allordernumbers+20*allordernumbers+800)))
+				{
+					
+					//turnoffflag = true;						
+					Print("subbuysellpoint 7 successfully Close All"+subbuysellpoint+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)
+							+"ordersrealprofitall = "+ordersrealprofitallbysubbspointtrend(subbuysellpoint));
+					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+					//if(turnoffflag == true)
+					{			
+						j=0;
+						k = 0;		
+						
+						/*一波做完后，手工禁止交易；第二天继续做*/					
+						for(j = 0;j < 24; j++)
+						{
+							if(ordercountallbysubbspointtrend(subbuysellpoint)>0)
+							{
+								Sleep(1000); 
+								ordercloseallbysubbspointtrend(subbuysellpoint);
+								Sleep(1000); 
+								ordercloseall2bysubbspointtrend(subbuysellpoint);					
+								Sleep(1000); 
+								k++;				
+							}
+							
+						}
+						if(k>=(j-1))
+						{		
+							Print("!!subbuysellpoint 7 monitoraccountprofittrend "+subbuysellpoint+"Something Serious Error by colse all order,pls close handly");			
+							//SendMail( "!!monitoraccountprofittrend Something Serious Error by colse all order,pls close handly","");		
+						}
+										
+					}
+
+				}					
+
 			}
 			else
 			{
@@ -4857,45 +4902,44 @@ void monitoraccountprofittrend()
 					}	
 				}
 
-			}
-
-
-			if(ordersrealprofitallbysubbspointtrend(subbuysellpoint)>
-				(ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)*2000/(allordernumbers*allordernumbers*allordernumbers+allordernumbers*allordernumbers+20*allordernumbers+2000)))
-			{
-				
-				//turnoffflag = true;						
-				Print("subbuysellpoint 7 successfully Close All"+subbuysellpoint+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)
-						+"ordersrealprofitall = "+ordersrealprofitallbysubbspointtrend(subbuysellpoint));
-				/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
-				//if(turnoffflag == true)
-				{			
-					j=0;
-					k = 0;		
+				if(ordersrealprofitallbysubbspointtrend(subbuysellpoint)>
+					(ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)*8000/(allordernumbers*allordernumbers*allordernumbers+allordernumbers*allordernumbers+20*allordernumbers+8000)))
+				{
 					
-					/*一波做完后，手工禁止交易；第二天继续做*/					
-					for(j = 0;j < 24; j++)
-					{
-						if(ordercountallbysubbspointtrend(subbuysellpoint)>0)
-						{
-							Sleep(1000); 
-							ordercloseallbysubbspointtrend(subbuysellpoint);
-							Sleep(1000); 
-							ordercloseall2bysubbspointtrend(subbuysellpoint);					
-							Sleep(1000); 
-							k++;				
-						}
+					//turnoffflag = true;						
+					Print("subbuysellpoint 7 successfully Close All"+subbuysellpoint+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitallbysubbspointtrend(subbuysellpoint)
+							+"ordersrealprofitall = "+ordersrealprofitallbysubbspointtrend(subbuysellpoint));
+					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
+					//if(turnoffflag == true)
+					{			
+						j=0;
+						k = 0;		
 						
+						/*一波做完后，手工禁止交易；第二天继续做*/					
+						for(j = 0;j < 24; j++)
+						{
+							if(ordercountallbysubbspointtrend(subbuysellpoint)>0)
+							{
+								Sleep(1000); 
+								ordercloseallbysubbspointtrend(subbuysellpoint);
+								Sleep(1000); 
+								ordercloseall2bysubbspointtrend(subbuysellpoint);					
+								Sleep(1000); 
+								k++;				
+							}
+							
+						}
+						if(k>=(j-1))
+						{		
+							Print("!!subbuysellpoint 8 monitoraccountprofittrend "+subbuysellpoint+"Something Serious Error by colse all order,pls close handly");			
+							//SendMail( "!!monitoraccountprofittrend Something Serious Error by colse all order,pls close handly","");		
+						}
+										
 					}
-					if(k>=(j-1))
-					{		
-						Print("!!subbuysellpoint 7 monitoraccountprofittrend "+subbuysellpoint+"Something Serious Error by colse all order,pls close handly");			
-						//SendMail( "!!monitoraccountprofittrend Something Serious Error by colse all order,pls close handly","");		
-					}
-									
-				}
 
-			}		
+				}	
+
+			}	
 
 		}
 
@@ -5718,7 +5762,14 @@ void monitoraccountprofitbreak()
 	int allordernumbers;
 	int j=0;
 	int k = 0;
-	int timeperiodnum;
+	int timeperiodnum;	
+	
+	//确保寻找买卖点是每个周期计算一次，而不是每个tick计算一次
+	if ( BoolCrossRecord[0][0].ChartEvent == iBars(MySymbol[0],timeperiod[0]))
+	{
+		return;
+	}
+
 	/*原则上采用服务器交易时间，为了便于人性化处理，做了一个转换*/	
 	timelocal = TimeCurrent() + globaltimezonediff*60*60;
 
@@ -7920,6 +7971,7 @@ void orderbuyselltypebreakhung(int SymPos,int timeperiodnum)
 
 // 每秒调用一次，反复执行的主体函数
 //int start()
+
 void OnTick(void)
 {
 
@@ -8096,9 +8148,10 @@ void OnTick(void)
    ////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/*短线获利清盘针对一分钟盘面*/
-	monitoraccountprofittrend();
 
-	monitoraccountprofitbreak();
+	monitoraccountprofittrend();
+	monitoraccountprofitbreak();		
+
 
 	checkbuysellorder();
 
@@ -8311,6 +8364,7 @@ void checkbuysellorder()
 
 							//移动止损到平保
 							//确保寻找买卖点是每个一分钟周期计算一次，而不是每个tick计算一次
+							//一分钟还是太频繁，导致缓冲区溢出了，因此改为5分钟检测一次
 							if ( BoolCrossRecord[SymPos][timeperiodnum].ChartEvent != iBars(my_symbol,timeperiod[timeperiodnum]))
 							{
 				 				
@@ -8595,3 +8649,5 @@ void checkbuysellorder()
 	}
 
 }
+
+
