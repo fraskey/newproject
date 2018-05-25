@@ -860,14 +860,19 @@ void initsymbol()
 	}		
 	else if(AccountServer() == HTHINKMARKETSSERVERDEMO)
 	{
+
+
 		MySymbol[0] = "AUDCAD";
 		MySymbol[1] = "AUDCHF";
 		MySymbol[2] = "AUDJPY";         
 		MySymbol[3] = "AUDNZD";         
-		MySymbol[4] = "AUDUSD";         
+		MySymbol[4] = "AUDUSD"; 
+
 		MySymbol[5] = "CADCHF"; 
-		MySymbol[6] = "CADJPY"; 	
+		MySymbol[6] = "CADJPY"; 
+
 		MySymbol[7] = "CHFJPY"; 	
+
 		MySymbol[8] = "EURAUD";         
 		MySymbol[9] = "EURCAD"; 
 		MySymbol[10] = "EURCHF"; 	
@@ -875,22 +880,82 @@ void initsymbol()
 		MySymbol[12] = "EURJPY"; 	
 		MySymbol[13] = "EURNZD"; 
 		MySymbol[14] = "EURUSD"; 
+
 		MySymbol[15] = "GBPAUD"; 
 		MySymbol[16] = "GBPCAD"; 
 		MySymbol[17] = "GBPCHF"; 
 		MySymbol[18] = "GBPJPY"; 
 		MySymbol[19] = "GBPNZD"; 
-		MySymbol[20] = "GBPUSD"; 	
+		MySymbol[20] = "GBPUSD"; 
+
 		MySymbol[21] = "NZDCAD"; 	
 		MySymbol[22] = "NZDCHF"; 	
 		MySymbol[23] = "NZDJPY"; 	
-		MySymbol[24] = "NZDUSD"; 	
+		MySymbol[24] = "NZDUSD"; 
+
 		MySymbol[25] = "USDCAD"; 	
 		MySymbol[26] = "USDCHF"; 			
 		MySymbol[27] = "USDJPY";	
+
 		MySymbol[28] = "XAUUSDp"; 			
 				
 		symbolNum = 29;
+
+		ForexIndex[0].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[1].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[2].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[3].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);		
+		ForexIndex[4].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+
+		if(MarketInfo(MySymbol[25],MODE_ASK) > 0.001)
+		{
+			ForexIndex[5].forexexchangevalue =  1/MarketInfo(MySymbol[25],MODE_ASK);
+			ForexIndex[6].forexexchangevalue =  1/MarketInfo(MySymbol[25],MODE_ASK);
+			ForexIndex[7].forexexchangevalue =  1/MarketInfo(MySymbol[26],MODE_ASK);
+
+		}
+		else
+		{
+			ForexIndex[5].forexexchangevalue =  1;
+			ForexIndex[6].forexexchangevalue =  1;
+			ForexIndex[7].forexexchangevalue =  1;
+
+			Print("Something was wrong with forex "+MySymbol[25] +"; value = "+ MarketInfo(MySymbol[26],MODE_ASK));	
+
+
+		}
+	
+
+		ForexIndex[8].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[9].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[10].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[11].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);		
+		ForexIndex[12].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[13].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[14].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+
+		ForexIndex[15].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);	
+		ForexIndex[16].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[17].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[18].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[19].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);		
+		ForexIndex[20].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+
+		ForexIndex[21].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+		ForexIndex[22].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+		ForexIndex[23].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);	
+		ForexIndex[24].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+
+		ForexIndex[25].forexexchangevalue =  1;
+		ForexIndex[26].forexexchangevalue =  1;
+		ForexIndex[27].forexexchangevalue =  1;	
+		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);	
+
+
+
+
+
+
 	}		
 	else if(AccountServer() == HFXOPENSERVER)
 	{
@@ -2544,7 +2609,7 @@ void InitBuySellPos()
 				BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoptailtimes = 1.1;
 
 				//定义伪装止损止盈值和实际止损止盈值之间的比值，防止黑平台根据你的头寸恶意止损和止盈
-				BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].fakedlevel = 1.2;
+				BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].fakedlevel = 1.5;
 
 
 				//记录当前一分钟的ibar位置
@@ -2555,44 +2620,44 @@ void InitBuySellPos()
 				if ((buysellpoint <= HBUYSELLALGNUM)&&(buysellpoint > 0))
 				{
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 4;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 6;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 12;						
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 20;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 3;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 10;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 16;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.5;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 8;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 12;											
 				}		
 
 				//定义时间周期，一分钟的买卖点,顺势交易的回调，回调已经很深，大概率回到正轨，因此止损稍微大一点，趋势打破买卖点
 				else if ((buysellpoint <= HBUYSELLALGNUM*4)&&(buysellpoint > HBUYSELLALGNUM*3))
 				{
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2.5;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 4;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 30;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*5)&&(buysellpoint > HBUYSELLALGNUM*4))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.8;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 3;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 20;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*6)&&(buysellpoint > HBUYSELLALGNUM*5))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 1.2;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 16;											
 				}							
@@ -2617,7 +2682,7 @@ void InitBuySellPos()
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod = 60*60*4;	
 
 					//每单允许损失的最大账户金额比例2%
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.02 - 0.001*(int((int(AccountBalance()))/500)))/2;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.02 - 0.001*(int((int(AccountBalance()))/5000)))/4;											
 
 				}
 				//定义时间周期，五分钟及以上的买卖点
@@ -2636,7 +2701,7 @@ void InitBuySellPos()
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod = 60*60*12;		
 
 					//每单允许损失的最大账户金额比例5%
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/5000)))/4;		
 
 				}
 				//定义时间周期，三十分钟及以上的买卖点
@@ -2655,7 +2720,7 @@ void InitBuySellPos()
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod = 60*60*48;		
 
 					//每单允许损失的最大账户金额比例5%
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/5000)))/4;		
 
 				}		
 
@@ -2675,7 +2740,7 @@ void InitBuySellPos()
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod = 60*60*4;	
 
 					//每单允许损失的最大账户金额比例2%
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.02 - 0.001*(int((int(AccountBalance()))/500)))/2;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.02 - 0.001*(int((int(AccountBalance()))/5000)))/4;											
 
 				}
 				//定义时间周期，五分钟及以上的买卖点
@@ -2694,7 +2759,7 @@ void InitBuySellPos()
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod = 60*60*12;		
 
 					//每单允许损失的最大账户金额比例5%
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/5000)))/4;		
 
 				}
 				//定义时间周期，三十分钟及以上的买卖点
@@ -2713,7 +2778,7 @@ void InitBuySellPos()
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].keepperiod = 60*60*48;		
 
 					//每单允许损失的最大账户金额比例5%
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/500)))/2;		
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].maxlose = (0.04- 0.002*(int((int(AccountBalance()))/5000)))/4;		
 
 				}							
 				else
@@ -8099,11 +8164,12 @@ void OnTick(void)
 
 	/*在交易时间段来临前确保使能全局交易标记，即下午1-2点之间每隔5分钟检查一次设计*/
 	enableglobaltradeflag();
-		
+
 	
 	/*所有货币对所有周期指标计算*/	
 	calculateindicator();
-      
+  
+
 	for(SymPos = 0; SymPos < symbolNum;SymPos++)
 	{	
 		/*特定货币一分钟寻找趋势买卖点*/
