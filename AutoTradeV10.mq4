@@ -42,7 +42,7 @@
 
 #define HEXNESSSERVERDEMO "Exness-Trial2"
 #define HTHINKMARKETSSERVERDEMO "ThinkForexAU-Demo"
-//#define HICMARKETSSERVER "ICMarkets-Demo03"
+#define HICMARKETSSERVERDEMO "ICMarkets-Demo03"
 #define HFXPOENSERVERDEMO "FXOpenUK-ECN Demo Server"
 #define HTICKMILLSERVERDEMO "Tickmill-DemoUK"
 #define HDRAWINEXSERVERDEMO "Darwinex-Demo"
@@ -857,7 +857,101 @@ void initsymbol()
 		ForexIndex[27].forexexchangevalue =  1;	
 		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);	
 
-	}		
+	}	
+
+	else if(AccountServer() == HICMARKETSSERVERDEMO)
+	{
+		MySymbol[0] = "AUDCAD";
+		MySymbol[1] = "AUDCHF";
+		MySymbol[2] = "AUDJPY";         
+		MySymbol[3] = "AUDNZD";         
+		MySymbol[4] = "AUDUSD"; 
+
+		MySymbol[5] = "CADCHF"; 
+		MySymbol[6] = "CADJPY"; 
+
+		MySymbol[7] = "CHFJPY"; 	
+
+		MySymbol[8] = "EURAUD";         
+		MySymbol[9] = "EURCAD"; 
+		MySymbol[10] = "EURCHF"; 	
+		MySymbol[11] = "EURGBP"; 
+		MySymbol[12] = "EURJPY"; 	
+		MySymbol[13] = "EURNZD"; 
+		MySymbol[14] = "EURUSD"; 
+
+		MySymbol[15] = "GBPAUD"; 
+		MySymbol[16] = "GBPCAD"; 
+		MySymbol[17] = "GBPCHF"; 
+		MySymbol[18] = "GBPJPY"; 
+		MySymbol[19] = "GBPNZD"; 
+		MySymbol[20] = "GBPUSD"; 
+
+		MySymbol[21] = "NZDCAD"; 	
+		MySymbol[22] = "NZDCHF"; 	
+		MySymbol[23] = "NZDJPY"; 	
+		MySymbol[24] = "NZDUSD"; 
+
+		MySymbol[25] = "USDCAD"; 	
+		MySymbol[26] = "USDCHF"; 			
+		MySymbol[27] = "USDJPY";	
+
+		MySymbol[28] = "XAUUSD"; 			
+				
+		symbolNum = 29;
+
+		ForexIndex[0].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[1].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[2].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[3].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);		
+		ForexIndex[4].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+
+		if(MarketInfo(MySymbol[25],MODE_ASK) > 0.001)
+		{
+			ForexIndex[5].forexexchangevalue =  1/MarketInfo(MySymbol[25],MODE_ASK);
+			ForexIndex[6].forexexchangevalue =  1/MarketInfo(MySymbol[25],MODE_ASK);
+			ForexIndex[7].forexexchangevalue =  1/MarketInfo(MySymbol[26],MODE_ASK);
+
+		}
+		else
+		{
+			ForexIndex[5].forexexchangevalue =  1;
+			ForexIndex[6].forexexchangevalue =  1;
+			ForexIndex[7].forexexchangevalue =  1;
+
+			Print("Something was wrong with forex "+MySymbol[25] +"; value = "+ MarketInfo(MySymbol[26],MODE_ASK));	
+
+
+		}
+	
+
+		ForexIndex[8].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[9].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[10].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[11].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);		
+		ForexIndex[12].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[13].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[14].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+
+		ForexIndex[15].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);	
+		ForexIndex[16].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[17].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[18].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[19].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);		
+		ForexIndex[20].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+
+		ForexIndex[21].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+		ForexIndex[22].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+		ForexIndex[23].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);	
+		ForexIndex[24].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+
+		ForexIndex[25].forexexchangevalue =  1;
+		ForexIndex[26].forexexchangevalue =  1;
+		ForexIndex[27].forexexchangevalue =  1;	
+		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);	
+
+	}	
+
 	else if(AccountServer() == HTHINKMARKETSSERVERDEMO)
 	{
 
@@ -950,11 +1044,6 @@ void initsymbol()
 		ForexIndex[26].forexexchangevalue =  1;
 		ForexIndex[27].forexexchangevalue =  1;	
 		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);	
-
-
-
-
-
 
 	}		
 	else if(AccountServer() == HFXOPENSERVER)
@@ -1654,7 +1743,17 @@ bool forexserverconnect()
 				
 		Print("Good Connect;Server name is ", AccountServer());	
 		connectflag = true;				
-	}			
+	}	
+	else if(AccountServer() == HICMARKETSSERVERDEMO)
+	{
+	
+		//定义服务器时间和本地时间（北京时间）差
+		globaltimezonediff = 6;	
+				
+		Print("Good Connect;Server name is ", AccountServer());	
+		connectflag = true;				
+	}
+
 	else if(AccountServer() == HTHINKMARKETSSERVERDEMO)
 	{
 	
