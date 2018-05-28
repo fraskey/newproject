@@ -2719,21 +2719,21 @@ void InitBuySellPos()
 				if ((buysellpoint <= HBUYSELLALGNUM)&&(buysellpoint > 0))
 				{
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 6;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 9;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 20;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 3;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 4;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 16;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 2;
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 3;
 					//按照1.5倍的止损止盈比计算
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 12;											
 				}		
@@ -4771,7 +4771,6 @@ void monitoraccountprofittrend()
 	//巡视不同周期的订单盈利情况
 	for(timeperiodnum = -1; timeperiodnum < 3;timeperiodnum++)
 	{
-
 		allordernumbers = ordercountalltrend(timeperiodnum);
 		if(allordernumbers>2)
 		{
@@ -4851,9 +4850,6 @@ void monitoraccountprofittrend()
 				}
 
 			}
-
-
-
 			if(ordersrealprofitalltrend(timeperiodnum)>(ordersexpectedmaxprofitalltrend(timeperiodnum)*50/(allordernumbers*allordernumbers+10*allordernumbers+50)))
 			{
 				
@@ -4892,8 +4888,8 @@ void monitoraccountprofittrend()
 
 		}
 
-
 	}
+
 	//巡视不同品种的订单盈利情况
 	for(SymPos = 0; SymPos < symbolNum;SymPos++)
 	{
@@ -4944,7 +4940,7 @@ void monitoraccountprofittrend()
 	}	
 
 	//巡视每一天盈利情况
-	for(subbuysellpoint = 1; subbuysellpoint < 6;SymPos++)
+	for(subbuysellpoint = 1; subbuysellpoint < 6;subbuysellpoint++)
 	{
 		allordernumbers = ordercountallbysubbspointtrend(subbuysellpoint);
 		if(allordernumbers>2)
@@ -5108,6 +5104,7 @@ void monitoraccountprofittrend()
 		}
 
 	}	
+
 
 }
 //////////////////////////////////////////////////////////////////////
@@ -8814,5 +8811,12 @@ void checkbuysellorder()
 	}
 
 }
+
+
+
+
+
+
+
 
 
