@@ -16,6 +16,10 @@
 #define MAINMAGIC  100000
 #define HSLBUYSELLREORD 5000
 
+/*定义多货币对数量*/
+#define HFOREXNUMBER 50
+
+
 //定义一个买卖点最多买卖的数量
 #define HSUBBUYSELLPOINTNUM 30
 
@@ -49,6 +53,7 @@
 #define HFXPOENSERVERDEMO "FXOpenUK-ECN Demo Server"
 #define HTICKMILLSERVERDEMO "Tickmill-DemoUK"
 #define HDRAWINEXSERVERDEMO "Darwinex-Demo"
+#define HDUCASCOPYSERVERDEMO "Dukascopy-DEMO-1"
 
 
 
@@ -102,7 +107,7 @@ int timeperiod[16];
 int TimePeriodNum = 6;
 
 // 定义外汇对
-string MySymbol[50];
+string MySymbol[HFOREXNUMBER];
 int symbolNum;
 
 
@@ -183,7 +188,7 @@ struct stForexIndex
 
 };
 
-stForexIndex ForexIndex[50];
+stForexIndex ForexIndex[HFOREXNUMBER];
 
 // 定义每一次交易发生时所记录下来的相关变量
 struct stBuySellPosRecord
@@ -258,7 +263,7 @@ struct stBuySellPosRecord
 //第一维度是外汇，第二维度是第几买卖点，当前共有16个买卖点
 //第三个维度是每个买卖点最多可以交易几次？原则上可以交易5次，每天最多交易一次，确保不会出现密集交易点。
 
-stBuySellPosRecord BuySellPosRecord[50][6*HBUYSELLALGNUM+1][HSUBBUYSELLPOINTNUM];
+stBuySellPosRecord BuySellPosRecord[HFOREXNUMBER][6*HBUYSELLALGNUM+1][HSUBBUYSELLPOINTNUM];
 
 string SubMagicName[6*HBUYSELLALGNUM+1];
 
@@ -290,7 +295,7 @@ struct stBoolCrossRecord
 	int CrossFlagTempPre;	
 	int ChartEvent;
 };
-stBoolCrossRecord BoolCrossRecord[50][HCROSSNUMBER+1];
+stBoolCrossRecord BoolCrossRecord[HFOREXNUMBER][HCROSSNUMBER+1];
 
 
 
@@ -1030,7 +1035,26 @@ void initsymbol()
 
 		MySymbol[28] = "XAUUSDp"; 			
 				
-		symbolNum = 29;
+		MySymbol[29] = "EURNOK"; 	
+		MySymbol[30] = "EURSEK"; 			
+		MySymbol[31] = "EURTRY";	
+		MySymbol[32] = "USDCNH"; 				
+		MySymbol[33] = "USDNOK"; 			
+		MySymbol[34] = "USDSEK"; 	
+		MySymbol[35] = "USDSGD"; 			
+		MySymbol[36] = "USDTRY";	
+		MySymbol[37] = "USDZAR"; 	
+
+		MySymbol[38] = "SPX500"; 
+		MySymbol[39] = "AUS200"; 	
+		MySymbol[40] = "FRA40"; 			
+		MySymbol[41] = "GER30";	
+		MySymbol[42] = "JPN225"; 
+		MySymbol[43] = "UK100"; 
+
+
+		symbolNum = 38;
+
 
 		ForexIndex[0].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
 		ForexIndex[1].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
@@ -1081,6 +1105,24 @@ void initsymbol()
 		ForexIndex[26].forexexchangevalue =  1;
 		ForexIndex[27].forexexchangevalue =  1;	
 		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);	
+
+
+		ForexIndex[29].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[30].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[31].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[32].forexexchangevalue =  1;
+		ForexIndex[33].forexexchangevalue =  1;
+		ForexIndex[34].forexexchangevalue =  1;	
+		ForexIndex[35].forexexchangevalue =  1;
+		ForexIndex[36].forexexchangevalue =  1;
+		ForexIndex[37].forexexchangevalue =  1;	
+		ForexIndex[38].forexexchangevalue =  1;	
+		ForexIndex[39].forexexchangevalue =  1;
+		ForexIndex[40].forexexchangevalue =  1;
+		ForexIndex[41].forexexchangevalue =  1;	
+		ForexIndex[42].forexexchangevalue =  1;
+		ForexIndex[43].forexexchangevalue =  1;
+
 
 	}		
 	else if(AccountServer() == HFXOPENSERVER)
@@ -1591,8 +1633,160 @@ void initsymbol()
 		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);				
 
 	}	
-		
 
+	else if(AccountServer() == HDUCASCOPYSERVERDEMO)
+	{
+		MySymbol[0] = "AUDCAD";
+		MySymbol[1] = "AUDCHF";
+		MySymbol[2] = "AUDJPY";         
+		MySymbol[3] = "AUDNZD";         
+		MySymbol[4] = "AUDUSD";   
+
+		MySymbol[5] = "CADCHF"; 
+		MySymbol[6] = "CADJPY"; 
+
+		MySymbol[7] = "CHFJPY"; 
+
+		MySymbol[8] = "EURAUD";         
+		MySymbol[9] = "EURCAD"; 
+		MySymbol[10] = "EURCHF"; 	
+		MySymbol[11] = "EURGBP"; 
+		MySymbol[12] = "EURJPY"; 	
+		MySymbol[13] = "EURNZD"; 
+		MySymbol[14] = "EURUSD"; 
+
+		MySymbol[15] = "GBPAUD"; 
+		MySymbol[16] = "GBPCAD"; 
+		MySymbol[17] = "GBPCHF"; 
+		MySymbol[18] = "GBPJPY"; 
+		MySymbol[19] = "GBPNZD"; 
+		MySymbol[20] = "GBPUSD"; 	
+
+		MySymbol[21] = "NZDCAD"; 	
+		MySymbol[22] = "NZDCHF"; 	
+		MySymbol[23] = "NZDJPY"; 	
+		MySymbol[24] = "NZDUSD"; 
+
+		MySymbol[25] = "USDCAD"; 	
+		MySymbol[26] = "USDCHF"; 			
+		MySymbol[27] = "USDJPY";	
+		MySymbol[28] = "XAUUSD"; 		
+
+
+		MySymbol[29] = "AUDSGD"; 	
+		MySymbol[30] = "CHFSGD"; 	
+		MySymbol[31] = "EURNOK"; 	
+		MySymbol[32] = "EURPLN"; 
+		MySymbol[33] = "EURSEK"; 	
+		MySymbol[34] = "EURSGD"; 		
+		MySymbol[35] = "SGDJPY"; 	
+		MySymbol[36] = "USDNOK"; 
+		MySymbol[37] = "USDPLN"; 	
+		MySymbol[38] = "USDSEK";
+		MySymbol[39] = "USDSGD"; 	
+		MySymbol[40] = "USDZAR"; 		 
+
+		symbolNum = 41;
+
+
+		ForexIndex[0].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[1].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[2].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+		ForexIndex[3].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);		
+		ForexIndex[4].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+
+		if(MarketInfo(MySymbol[25],MODE_ASK) > 0.001)
+		{
+			ForexIndex[5].forexexchangevalue =  1/MarketInfo(MySymbol[25],MODE_ASK);
+			ForexIndex[6].forexexchangevalue =  1/MarketInfo(MySymbol[25],MODE_ASK);
+
+		}
+		else
+		{
+			ForexIndex[5].forexexchangevalue =  1;
+			ForexIndex[6].forexexchangevalue =  1;
+
+			Print("Something was wrong with forex "+MySymbol[25] +"; value = "+ MarketInfo(MySymbol[25],MODE_ASK));	
+		}
+	
+
+		if(MarketInfo(MySymbol[26],MODE_ASK) > 0.001)
+		{
+
+			ForexIndex[7].forexexchangevalue =  1/MarketInfo(MySymbol[26],MODE_ASK);
+
+		}
+		else
+		{
+			ForexIndex[7].forexexchangevalue =  1;
+
+			Print("Something was wrong with forex "+MySymbol[26] +"; value = "+ MarketInfo(MySymbol[26],MODE_ASK));	
+		}
+
+		ForexIndex[8].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[9].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[10].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[11].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);		
+		ForexIndex[12].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[13].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[14].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+
+		ForexIndex[15].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);	
+		ForexIndex[16].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[17].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[18].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+		ForexIndex[19].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);		
+		ForexIndex[20].forexexchangevalue =  MarketInfo(MySymbol[20],MODE_ASK);
+
+		ForexIndex[21].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+		ForexIndex[22].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+		ForexIndex[23].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);	
+		ForexIndex[24].forexexchangevalue =  MarketInfo(MySymbol[24],MODE_ASK);
+
+		ForexIndex[25].forexexchangevalue =  1;
+		ForexIndex[26].forexexchangevalue =  1;
+		ForexIndex[27].forexexchangevalue =  1;	
+		ForexIndex[28].forexexchangevalue =  MarketInfo(MySymbol[28],MODE_ASK);		
+
+		ForexIndex[29].forexexchangevalue =  MarketInfo(MySymbol[4],MODE_ASK);
+
+		if(MarketInfo(MySymbol[26],MODE_ASK) > 0.001)
+		{
+
+			ForexIndex[30].forexexchangevalue =  1/MarketInfo(MySymbol[26],MODE_ASK);
+
+		}
+		else
+		{
+			ForexIndex[30].forexexchangevalue =  1;
+
+			Print("Something was wrong with forex "+MySymbol[26] +"; value = "+ MarketInfo(MySymbol[26],MODE_ASK));	
+		}
+		ForexIndex[31].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[32].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+		ForexIndex[33].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);		
+		ForexIndex[34].forexexchangevalue =  MarketInfo(MySymbol[14],MODE_ASK);
+
+		if(MarketInfo(MySymbol[39],MODE_ASK) > 0.001)
+		{
+
+			ForexIndex[35].forexexchangevalue =  1/MarketInfo(MySymbol[39],MODE_ASK);
+
+		}
+		else
+		{
+			ForexIndex[35].forexexchangevalue =  1;
+
+			Print("Something was wrong with forex "+MySymbol[39] +"; value = "+ MarketInfo(MySymbol[39],MODE_ASK));	
+		}
+
+		ForexIndex[36].forexexchangevalue =  1;
+		ForexIndex[37].forexexchangevalue =  1;
+		ForexIndex[38].forexexchangevalue =  1;
+		ForexIndex[39].forexexchangevalue =  1;
+		ForexIndex[40].forexexchangevalue =  1;
+
+	}			
 
 	else if(AccountServer() == HLMAXSERVER)
 	{
@@ -1857,8 +2051,16 @@ bool forexserverconnect()
 		Print("Good Connect;Server name is ", AccountServer());	
 		connectflag = true;				
 	}
-
+	else if(AccountServer() == HDUCASCOPYSERVERDEMO)
+	{
+	
+		//定义服务器时间和本地时间（北京时间）差
+		globaltimezonediff = 6;	
 				
+		Print("Good Connect;Server name is ", AccountServer());	
+		connectflag = true;				
+	}			
+
 	else if(AccountServer() == HLMAXSERVER)
 	{
 	
@@ -1964,7 +2166,6 @@ void initglobaltradeflag()
 	}
 
 }
-
 
 /*在交易时间段来临前确保使能全局交易标记*/
 // 下午13点开始使能正常交易
@@ -2758,21 +2959,21 @@ void InitBuySellPos()
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 18;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 20;						
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 10;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*2)&&(buysellpoint > HBUYSELLALGNUM))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 9;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 15;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 8;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*3)&&(buysellpoint > HBUYSELLALGNUM*2))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 6;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 10;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 5;											
 				}		
 
 				//定义时间周期，一分钟的买卖点,顺势交易的回调，回调已经很深，大概率回到正轨，因此止损稍微大一点，趋势打破买卖点
@@ -2781,21 +2982,21 @@ void InitBuySellPos()
 					//定义止损额度，这个值最为关键，计划通过自学习的方式获取，默认设置为2
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 18;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 20;						
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 10;						
 				}
 				//定义时间周期，五分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*5)&&(buysellpoint > HBUYSELLALGNUM*4))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 9;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 15;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 8;											
 				}
 				//定义时间周期，三十分钟及以上的买卖点
 				else if((buysellpoint <= HBUYSELLALGNUM*6)&&(buysellpoint > HBUYSELLALGNUM*5))
 				{
 					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossleverage = 6;
 					//按照1.5倍的止损止盈比计算
-					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 10;											
+					BuySellPosRecord[SymPos][buysellpoint][subbuysellpoint].stoplossprofitleverage = 5;											
 				}							
 				else
 				{
@@ -5086,7 +5287,6 @@ double ordersellminopenpricetrend(int mySymPos)
 }
 
 
-
 // 正常交易出现大幅盈利的情况下平掉所有交易，去除近期成交单和设置成无止盈的手工单
 void monitoraccountprofittrend()
 {
@@ -5109,6 +5309,11 @@ void monitoraccountprofittrend()
 
 	int timeperiodnum;
 
+	/*没有外汇对时退出*/
+	if(symbolNum < 1)
+	{
+		return;
+	}
 
 	//确保寻找买卖点是每个周期计算一次，而不是每个tick计算一次
 	if ( BoolCrossRecord[0][0].ChartEvent == iBars(MySymbol[0],timeperiod[0]))
@@ -5132,14 +5337,12 @@ void monitoraccountprofittrend()
 		allordernumbers = ordercountalltrend(timeperiodnum);
 		if(allordernumbers>2)
 		{
-
 			//定义当总量超过一定数值就清仓。
 			if(-1 == timeperiodnum)
 			{
-				if(ordersrealprofitalltrend(timeperiodnum)>(ordersexpectedmaxprofitalltrend(timeperiodnum)*110/(allordernumbers*allordernumbers+10*allordernumbers+110)))
+				if(ordersrealprofitalltrend(timeperiodnum)>(ordersexpectedmaxprofitalltrend(timeperiodnum)/(8*((allordernumbers/symbolNum)*(allordernumbers/symbolNum)+(allordernumbers/symbolNum)+1))))
 				{
-					
-					//turnoffflag = true;						
+					/*turnoffflag = true;*/						
 					Print("timeperiodnum 22 successfully Close All"+timeperiodnum+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitalltrend(timeperiodnum)
 							+"ordersrealprofitall = "+ordersrealprofitalltrend(timeperiodnum));
 					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
@@ -5171,48 +5374,8 @@ void monitoraccountprofittrend()
 					}
 
 				}	
+								
 			}
-			else
-			{
-				if(ordersrealprofitalltrend(timeperiodnum)>(ordersexpectedmaxprofitalltrend(timeperiodnum)*100/(allordernumbers*allordernumbers+10*allordernumbers+100)))
-				{
-					
-					//turnoffflag = true;						
-					Print("timeperiodnum 33 successfully Close All"+timeperiodnum+": allordernumbers = " + allordernumbers + "ordersexpectedmaxprofitall = " + ordersexpectedmaxprofitalltrend(timeperiodnum)
-							+"ordersrealprofitall = "+ordersrealprofitalltrend(timeperiodnum));
-					/*关闭所有在监控的货币，去掉止盈的货币和近期刚进入的货币不在监控范围内*/
-					//if(turnoffflag == true)
-					{			
-						j=0;
-						k = 0;		
-						
-						/*一波做完后，手工禁止交易；第二天继续做*/					
-						for(j = 0;j < 24; j++)
-						{
-							if(ordercountalltrend(timeperiodnum)>0)
-							{
-								Sleep(1000); 
-								orderclosealltrend(timeperiodnum);
-								Sleep(1000); 
-								ordercloseall2trend(timeperiodnum);					
-								Sleep(1000); 
-								k++;				
-							}
-							
-						}
-						if(k>=(j-1))
-						{		
-							Print("!!timeperiod 33 monitoraccountprofittrend "+timeperiodnum+"Something Serious Error by colse all order,pls close handly");			
-							//SendMail( "!!monitoraccountprofittrend Something Serious Error by colse all order,pls close handly","");		
-						}
-										
-					}
-
-				}	
-
-			}
-	
-
 		}
 
 	}
@@ -5266,14 +5429,12 @@ void monitoraccountprofittrend()
 
 	}	
 
-
 }
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
-
 
 // 主程序初始化
 int init()
@@ -6632,7 +6793,6 @@ void orderbuyselltypetrend(int SymPos,int timeperiodnum)
 		}
 
 	}	
-
 
 	
 }
